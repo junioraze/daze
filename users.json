@@ -1,0 +1,26 @@
+{
+  "users": [
+    {
+      "id": "admin",
+      "username": "admin",
+      "email": "admin@example.com",
+      "full_name": "Administrador",
+      "is_active": true,
+      "is_admin": true,
+      "created_at": "2024-01-01T00:00:00",
+      "last_login": null,
+      "metadata": {}
+    },
+    {
+      "id": "user1",
+      "username": "demo",
+      "email": "demo@example.com",
+      "full_name": "Usuário Demo",
+      "is_active": true,
+      "is_admin": false,
+      "created_at": "2024-01-01T00:00:00",
+      "last_login": null,
+      "metadata": {}
+    }
+  ]
+}
