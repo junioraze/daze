@@ -1,231 +1,287 @@
-# 🌊 H2O Wave Modular Template
+# DAZE - H2O Wave Template
+*Dynamic Application Zone Engine - Template modular para projetos H2O Wave*
 
-## 📋 Sobre
+## 🎯 O que é o DAZE?
 
-Esta template foi desenvolvida para criar aplicações H2O Wave modernas, escaláveis e bem estruturadas. Ela resolve os problemas comuns de:
-- **Aplicações monolíticas** em um único arquivo
-- **Alto acoplamento** entre componentes
-- **Baixa manutenibilidade** do código
-- **Dificuldade de reutilização** de componentes
+DAZE é um template produção-ready para H2O Wave que oferece:
+
+- **Arquitetura Modular**: Cards flexíveis que orquestram múltiplos componentes
+- **Componentes Reutilizáveis**: Gráficos, estatísticas, tabelas com métodos `create()` e `update()`
+- **Sistema de Eventos**: Gerenciamento inteligente de interações do usuário
+- **Compatibilidade Total**: 100% compatível com H2O Wave UI
+- **Pronto para Produção**: Estrutura escalável e organizada
 
 ## 🏗️ Arquitetura
 
-A template segue uma arquitetura em camadas inspirada em padrões de design modernos:
-
 ```
-wave_template/
-├── app.py                 # Ponto de entrada principal
-├── core/                  # Core da aplicação
-│   ├── __init__.py
-│   ├── app.py            # Classe principal da aplicação
-│   ├── config.py         # Configurações centralizadas
-│   └── state.py          # Gerenciamento de estado
-├── auth/                  # Sistema de autenticação
-│   ├── __init__.py
-│   ├── manager.py        # Gerenciador de autenticação
-│   └── models.py         # Modelos de usuário
-├── pages/                 # Páginas/Views da aplicação
-│   ├── __init__.py
-│   ├── base.py           # Classe base para páginas
-│   ├── login.py          # Página de login
-│   └── dashboard.py      # Página principal
-├── components/            # Componentes reutilizáveis
-│   ├── __init__.py
-│   ├── base.py           # Componente base
-│   ├── forms.py          # Formulários
-│   ├── charts.py         # Gráficos
-│   └── tables.py         # Tabelas
-├── services/              # Serviços/Business Logic
-│   ├── __init__.py
-│   ├── data_service.py   # Serviços de dados
-│   └── ai_service.py     # Serviços de IA
-├── utils/                 # Utilitários
-│   ├── __init__.py
-│   ├── helpers.py        # Funções auxiliares
-│   └── validators.py     # Validadores
-├── static/                # Arquivos estáticos
-│   ├── css/
-│   ├── images/
-│   └── js/
-└── requirements.txt       # Dependências
+DAZE/
+├── components/
+│   ├── base.py          # BaseComponent e BaseCard
+│   ├── charts.py        # Componente de gráficos
+│   ├── stats.py         # Componente de estatísticas
+│   └── tables.py        # Componente de tabelas
+├── pages/
+│   └── base.py          # BasePage para layout
+├── services/
+│   └── data_service.py  # Serviços de dados
+└── main.py              # Exemplo funcional
 ```
+### Conceitos Principais
 
-## 🎯 Por que Esta Arquitetura Resolve Seus Problemas
+1. **BaseComponent**: Classe abstrata para componentes reutilizáveis
+2. **BaseCard**: Container que orquestra múltiplos componentes
+3. **BasePage**: Gerencia layout e cards
+4. **DataService**: Processa dados e converte para Wave
 
-### 1. **Elimina Monolitismo** 
-Seus apps atuais (`app.py`, `cockpit.py`, `conjecto_templates.py`) têm 500+ linhas cada um, misturando:
-- ❌ UI com lógica de negócio
-- ❌ Autenticação com manipulação de dados  
-- ❌ Handlers espalhados sem organização
+## 🚀 Início Rápido
 
-**Nossa solução:**
-- ✅ **Core**: Apenas ciclo de vida da aplicação
-- ✅ **Pages**: Apenas lógica de apresentação
-- ✅ **Services**: Apenas lógica de negócio
-- ✅ **Components**: Apenas elementos UI reutilizáveis
-
-### 2. **Reduz Acoplamento Mantendo Legibilidade**
-**Problema atual:** Funções gigantes como `make_side_panel()` fazem tudo
-```python
-# ❌ Seu código atual - acoplado
-def make_side_panel(df, q, sp_title, dim_y, dim_x, group, plot_type, md_table_context):
-    # 50+ linhas misturando dados, UI e lógica
-```
-
-**Nossa solução:** Responsabilidades separadas mas coesas
-```python
-# ✅ Nossa template - desacoplado mas legível
-class SidePanelComponent(BaseComponent):
-    def render(self, data): # Apenas renderização
-        return self.create_panel(data)
-
-class DataService:
-    def process_dataframe(self, df): # Apenas processamento
-        return processed_data
-
-class DashboardPage(BasePage):
-    async def render(self, q): # Apenas orquestração
-        data = self.data_service.process_dataframe(df)
-        panel = self.side_panel.render(data)
-        self.add_card(q, 'panel', panel)
-```
-
-### 3. **Facilita Manutenção**
-**Problema atual:** Para mudar um gráfico, você precisa mexer em:
-- Função de 100+ linhas
-- Lógica de dados misturada
-- UI acoplada com backend
-
-**Nossa solução:**
-- 📁 **Mudar dados**: Apenas `services/data_service.py`
-- 🎨 **Mudar UI**: Apenas `components/charts.py`  
-- 🔀 **Mudar fluxo**: Apenas `pages/dashboard.py`
-- 🔐 **Mudar auth**: Apenas `auth/manager.py`
-
-### 4. **Reutilização Real**
-No seu código atual, se quiser usar `make_bignumbers_st()` em outro app, precisa copiar:
-- A função inteira
-- Todas as dependências  
-- Ajustar para novo contexto
-
-**Nossa template:**
-```python
-# Usar em qualquer app
-from components import StatsComponent
-stats = StatsComponent()
-card = stats.render(data)  # Funciona em qualquer lugar
-```
-
-### 5. **Equilibrio Perfeito**
-**Muito desacoplado** = 50 arquivos pequenos, difícil de entender  
-**Muito acoplado** = 1 arquivo gigante, difícil de manter
-
-**Nossa abordagem:**
-- 📝 **Páginas** = 1 arquivo por funcionalidade principal
-- 🧩 **Componentes** = 1 arquivo por tipo de elemento
-- ⚙️ **Core** = Apenas arquivos essenciais (3-4 arquivos)
-- 🔧 **Utils** = Helpers organizados por propósito
-
-**Resultado:** 15-20 arquivos bem organizados vs 3 arquivos gigantes
-
-## 🚀 Como Usar
-
-### 1. Instalação
+### Instalação
 ```bash
-pip install h2o-wave pandas
+pip install h2o-wave
 ```
 
-### 2. Configuração
-Edite `core/config.py` com suas configurações:
-```python
-APP_NAME = "Minha Aplicação"
-APP_VERSION = "1.0.0"
-THEME = "neon"
-```
-
-### 3. Executar Aplicação
+### Executar Exemplo
 ```bash
-python app.py
+wave run main.py
 ```
 
-### 4. Criar Nova Página
+### Criar Sua Primeira Aplicação
+
 ```python
+from h2o_wave import main, app, Q, ui
+from components.base import BaseCard
+from components.charts import ChartComponent
 from pages.base import BasePage
-from h2o_wave import ui
 
-class MinhaNovaPage(BasePage):
-    def __init__(self, app):
-        super().__init__(app, "minha_pagina", "Minha Página")
+# 1. Criar um Card Personalizado
+class MeuCard(BaseCard):
+    def __init__(self):
+        super().__init__('meu_card')
+        
+        # Adicionar componentes
+        self.add_component('grafico', ChartComponent('vendas_chart'))
+        
+        # Registrar eventos
+        self.register_event('atualizar', self._handle_update)
     
-    async def render(self, q):
-        return [
-            ui.form_card(
-                box="content",
-                items=[
-                    ui.text("Olá mundo!")
-                ]
-            )
-        ]
+    def create(self, q: Q, zone: str, **kwargs):
+        # Criar controles
+        q.page[f'{self.card_id}_controls'] = ui.form_card(
+            box=zone,
+            title='Meu Dashboard',
+            items=[
+                ui.button('atualizar', 'Atualizar Dados')
+            ]
+        )
+        
+        # Criar componentes
+        dados_iniciais = {
+            'grafico': {
+                'chart_data': [{'x': 'A', 'y': 100}],
+                'box': 'content',
+                'title': 'Vendas'
+            }
+        }
+        super().create(q, zone, **dados_iniciais)
+    
+    async def _handle_update(self, q: Q):
+        # Atualizar dados
+        novos_dados = {
+            'grafico': {
+                'chart_data': [{'x': 'A', 'y': 200}],
+                'box': 'content',
+                'title': 'Vendas Atualizadas'
+            }
+        }
+        self.update_components(q, novos_dados)
+
+# 2. Criar Página
+class MinhaPagina(BasePage):
+    def __init__(self):
+        super().__init__(route='/', title='Minha App')
+        self.meu_card = MeuCard()
+        self.add_card(self.meu_card, 'content')
+    
+    async def handle_events(self, q):
+        return await self.meu_card.handle_events(q)
+
+# 3. Servir
+pagina = MinhaPagina()
+
+@app('/')
+async def serve(q: Q):
+    if await pagina.handle_events(q):
+        await q.page.save()
+        return
+    await pagina.render(q)
+
+if __name__ == '__main__':
+    main()
 ```
 
-### 5. Adicionar Componente
+## 📋 Componentes Disponíveis
+
+### ChartComponent
+```python
+chart = ChartComponent('meu_grafico')
+chart_data = [{'x': 'Jan', 'y': 100}, {'x': 'Feb', 'y': 150}]
+chart.create(q, chart_data=chart_data, box='content', title='Vendas')
+chart.update(q, chart_data=novos_dados)
+```
+
+### StatsComponent
+```python
+stats = StatsComponent('minhas_stats')
+stats_data = [
+    {'label': 'Vendas', 'value': '1000', 'icon': 'Money'},
+    {'label': 'Clientes', 'value': '50', 'icon': 'People'}
+]
+stats.create(q, stats_data=stats_data, box='sidebar')
+```
+
+### TableComponent
+```python
+table = TableComponent('minha_tabela')
+table_data = [
+    {'produto': 'A', 'vendas': 100},
+    {'produto': 'B', 'vendas': 200}
+]
+table.create(q, table_data=table_data, box='content', title='Produtos')
+```
+
+## 🎛️ Sistema de Eventos
+
+### Registrar Eventos no Card
+```python
+class MeuCard(BaseCard):
+    def __init__(self):
+        super().__init__('card_id')
+        
+        # Registrar handlers
+        self.register_event('botao_click', self._handle_click)
+        self.register_event('refresh', self._handle_refresh)
+    
+    async def _handle_click(self, q: Q):
+        # Lógica do evento
+        pass
+```
+
+### Sistema Automático de Detecção
+O BaseCard automaticamente detecta eventos baseado nos nomes dos botões/controles.
+
+## 🔧 Personalização Avançada
+
+### Criar Componente Personalizado
 ```python
 from components.base import BaseComponent
-from h2o_wave import ui
 
 class MeuComponente(BaseComponent):
-    def render(self, data=None):
-        return ui.stat_card(
-            box="stats",
-            title="Estatística",
-            value=str(data or 0)
+    def create(self, q: Q, **kwargs):
+        dados = kwargs.get('meus_dados', [])
+        box = kwargs.get('box', 'content')
+        title = kwargs.get('title', 'Meu Componente')
+        
+        # Criar UI específica
+        q.page[self.component_id] = ui.form_card(
+            box=box,
+            title=title,
+            items=[ui.text(f'Dados: {len(dados)} itens')]
         )
+    
+    def update(self, q: Q, **kwargs):
+        # Re-criar com novos dados
+        self.create(q, **kwargs)
 ```
 
-## 📝 Exemplo Simples
+### Layout Personalizado
+```python
+class MinhaPagina(BasePage):
+    def setup_layout(self, q: Q):
+        q.page['sidebar'] = ui.nav_card(box='1 1 2 -1', items=[])
+        q.page['header'] = ui.header_card(box='3 1 -1 2', title='App')
+        q.page['content'] = ui.form_card(box='3 3 -1 -1', title='Conteúdo')
+```
 
-Veja o exemplo completo na aplicação incluída que demonstra:
-- Sistema de login
-- Dashboard com gráficos
-- Componentes reutilizáveis
-- Navegação entre páginas
+## 📊 Trabalhando com Dados
 
-## 🔧 Extensões
+### DataService
+```python
+from services.data_service import DataService
 
-### Adicionar Nova Autenticação
-1. Implemente `AuthProvider` em `auth/manager.py`
-2. Configure em `core/config.py`
-3. Use em qualquer página
+data_service = DataService()
 
-### Adicionar Novo Serviço
-1. Crie arquivo em `services/`
-2. Herde de `BaseService` se necessário
-3. Injete onde precisar
+# Converter dados para Wave charts
+chart_data = data_service.to_wave_data(meus_dados, x='mes', y='vendas')
 
-### Personalizar Tema
-1. Modifique `core/config.py`
-2. Adicione CSS customizado em `static/css/`
-3. Configure layouts em `core/app.py`
+# Processar dados
+```
 
-## 🎨 Temas Suportados
-- `neon` (padrão)
-- `nord`
-- `light`
-- `dark`
+### Integração com APIs
+```python
+class MeuCard(BaseCard):
+    async def _fetch_data(self):
+        dados = await self._fetch_data()
+        self.update_components(q, {'chart': {'chart_data': dados}})
+```
 
-## 📚 Documentação
+## 🎨 Boas Práticas
 
-- [H2O Wave Docs](https://wave.h2o.ai/)
-- [Exemplos Avançados](./examples/)
-- [API Reference](./docs/api.md)
+### Organização de Cards
+- Um card = um conjunto lógico de funcionalidades
+- Cards orquestram múltiplos componentes relacionados
+- Use eventos para coordenar atualizações
+
+### Gerenciamento de Estado
+- Use `q.client` para estado por sessão
+- Cards mantêm referências aos componentes
+- DataService processa e converte dados
+
+### Performance
+- Atualize apenas componentes necessários
+- Use `update_components()` com dados específicos
+- Evite re-criar toda a página desnecessariamente
+
+## 🚀 Deploy para Produção
+
+### Estrutura Recomendada
+```
+minha_app/
+├── components/       # Componentes reutilizáveis
+├── pages/           # Páginas da aplicação
+├── services/        # Lógica de negócio
+├── static/          # Arquivos estáticos
+├── config/          # Configurações
+└── main.py          # Ponto de entrada
+```
+
+### Configuração
+```python
+# config/settings.py
+WAVE_CONFIG = {
+    'host': '0.0.0.0',
+    'port': 10101,
+    'debug': False
+}
+```
 
 ## 🤝 Contribuindo
 
-1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Abra um Pull Request
+DAZE é um template base - customize e expanda conforme suas necessidades!
 
-## 📄 Licença
+---
+# DAZE - H2O Wave Template (Atualizado)
+---
 
-MIT License - veja LICENSE para detalhes.
+**DAZE** - Accelerating Wave Development 🌊⚡
+3. Implemente `handle_events()` para responder a eventos do usuário.
+
+## Como rodar
+## Recomendações
+- Use sempre o serviço de dados para acessar e manipular dados.
+- Mantenha o estado do usuário em `q.client`.
+- Use os utilitários do BaseCard para criar componentes Wave de forma simples.
+- Siga o padrão de eventos para atualização dinâmica dos cards.
+
+---
+
+Para dúvidas ou sugestões, consulte o arquivo MIGRATION.md ou abra uma issue.

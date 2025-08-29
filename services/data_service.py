@@ -205,3 +205,46 @@ class DataService:
             'missing_values': df.isnull().sum().to_dict(),
             'data_types': df.dtypes.astype(str).to_dict()
         }
+    
+    async def get_sample_user_data(self, count: int = 10) -> List[Dict[str, Any]]:
+        """
+        Gera dados de exemplo de usuários para relatórios
+        Args:
+            count: Número de usuários a gerar
+        Returns:
+            Lista de dicionários com dados de usuários
+        """
+        cache_key = f"user_data_{count}"
+        cached_data = await self.get_cached_data(cache_key)
+        
+        if cached_data:
+            return cached_data
+        
+        import random
+        from datetime import datetime, timedelta
+        
+        users = []
+        first_names = ['João', 'Maria', 'Pedro', 'Ana', 'Carlos', 'Sofia', 'Miguel', 'Beatriz', 'Tiago', 'Lucia']
+        last_names = ['Silva', 'Santos', 'Oliveira', 'Costa', 'Lima', 'Fernandes', 'Rocha', 'Alves', 'Pereira', 'Martins']
+        roles = ['Admin', 'User', 'Manager', 'Viewer', 'Editor']
+        departments = ['Vendas', 'Marketing', 'TI', 'RH', 'Financeiro']
+        
+        for i in range(count):
+            first = random.choice(first_names)
+            last = random.choice(last_names)
+            full_name = f'{first} {last}'
+            email = f'{first.lower()}.{last.lower()}{i+1}@company.com'
+            
+            users.append({
+                'name': full_name,
+                'email': email,
+                'role': random.choice(roles),
+                'department': random.choice(departments),
+                'last_login': (datetime.now() - timedelta(days=random.randint(1, 30))).strftime('%Y-%m-%d'),
+                'status': random.choice(['Ativo', 'Inativo']),
+                'projects': random.randint(1, 8),
+                'score': round(random.uniform(0, 100), 1)
+            })
+        
+        await self.set_cached_data(cache_key, users)
+        return users

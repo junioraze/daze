@@ -1,0 +1,12 @@
+{
+    // Impede o VSCode de formatar automaticamente com Black
+    "python.formatting.provider": "none",
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": null,
+    "python.formatting.blackPath": "",
+    "python.formatting.blackArgs": [],
+    "[python]": {
+        "editor.defaultFormatter": null,
+        "editor.formatOnSave": false
+    }
+}

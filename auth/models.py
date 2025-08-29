@@ -43,12 +43,19 @@ class User:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'User':
         """Cria usuário a partir de dicionário"""
+        print(f"[DEBUG] User.from_dict chamado com: {data}")
         user_data = data.copy()
-        
+        # Fallback para campos obrigatórios
+        user_data.setdefault('id', '')
+        user_data.setdefault('username', '')
+        user_data.setdefault('email', '')
+        user_data.setdefault('full_name', '')
+        user_data.setdefault('is_active', True)
+        user_data.setdefault('is_admin', False)
+        user_data.setdefault('metadata', {})
         # Converter datas
         if user_data.get('created_at'):
             user_data['created_at'] = datetime.fromisoformat(user_data['created_at'])
         if user_data.get('last_login'):
             user_data['last_login'] = datetime.fromisoformat(user_data['last_login'])
-        
         return cls(**user_data)

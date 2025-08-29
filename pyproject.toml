@@ -1,0 +1,17 @@
+# Configurações do projeto DAZE
+[tool.pyright]
+include = ["components", "pages", "services"]
+exclude = ["**/__pycache__"]
+defineConstant = { DEBUG = true }
+reportMissingImports = true
+reportMissingTypeStubs = false
+pythonVersion = "3.8"
+pythonPlatform = "All"
+
+[tool.pylint]
+ignore-patterns = "test_.*"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'

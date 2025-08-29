@@ -11,8 +11,34 @@ from .base import BaseComponent
 class StatsComponent(BaseComponent):
     """Componente para exibir estatísticas em cards"""
     
-    def __init__(self):
-        super().__init__('stats')
+    def __init__(self, component_id: str):
+        super().__init__(component_id)
+    
+    def create(self, q, stats_data: List[Dict[str, Any]] = None, 
+               box: str = 'content', title: str = 'Estatísticas', **kwargs):
+        """Cria o componente de estatísticas na página Wave"""
+        if not stats_data:
+            stats_data = [{'label': 'Sem dados', 'value': '0', 'icon': 'Info'}]
+        
+        # Converter dados para ui.stat items
+        stat_items = []
+        for stat in stats_data:
+            stat_items.append(ui.stat(
+                label=stat.get('label', 'Label'),
+                value=str(stat.get('value', '0')),
+                icon=stat.get('icon', 'Info')
+            ))
+        
+        q.page[self.component_id] = ui.form_card(
+            box=box,
+            title=title,
+            items=[ui.stats(items=stat_items)]
+        )
+    
+    def update(self, q, **kwargs):
+        """Atualiza as estatísticas com novos dados"""
+        # Re-criar com os novos dados
+        self.create(q, **kwargs)
     
     def render(self, data: List[Dict[str, Any]] = None, **kwargs) -> ui.FormCard:
         """Renderiza o componente de estatísticas

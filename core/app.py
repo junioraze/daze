@@ -17,12 +17,11 @@ if project_root not in sys.path:
 
 from core.config import get_config
 from core.state import StateManager
-from utils.layout import get_responsive_layout
+
 
 
 class WaveApp:
     """Classe principal da aplicação Wave - DAZE Template"""
-    
     def __init__(self, static_strategy: str = "minimal"):
         self.config = get_config()
         self.state_manager = StateManager()
@@ -30,91 +29,72 @@ class WaveApp:
         self.auth_manager: Optional['AuthManager'] = None
         self.static_strategy = static_strategy
         self.static_manager = None
-        self.layout_manager = get_responsive_layout()
         self.logger = logging.getLogger(__name__)
-        
-        # Configurar logging
-        if self.config.debug:
-            logging.basicConfig(level=logging.DEBUG)
-        
-        # Inicializar estratégia de arquivos estáticos
-        self._init_static_strategy()
-        
-    def _init_static_strategy(self):
-        """Inicializa estratégia de arquivos estáticos"""
-        try:
-            if self.static_strategy == "wave":
-                from utils.wave_static_manager import WaveStaticManager
-                self.static_manager = WaveStaticManager()
-            elif self.static_strategy == "symlink":
-                from utils.symlink_static_manager import SymlinkStaticManager
-                self.static_manager = SymlinkStaticManager()
-            elif self.static_strategy == "minimal":
-                from utils.minimal_static_manager import MinimalStaticManager
-                self.static_manager = MinimalStaticManager()
-            else:
-                raise ValueError(f"Estratégia desconhecida: {self.static_strategy}")
-                
-            self.logger.info(f"Estratégia de arquivos estáticos: {self.static_strategy}")
-            
-        except Exception as e:
-            self.logger.error(f"Erro ao inicializar estratégia estática: {e}")
-            # Fallback para minimal
-            from utils.minimal_static_manager import MinimalStaticManager
-            self.static_manager = MinimalStaticManager()
-    
-    def register_page(self, page_instance: 'BasePage') -> None:
-        """Registra uma página na aplicação"""
-        self.pages[page_instance.route] = page_instance
-        self.logger.info(f"Página registrada: {page_instance.route}")
-    
-    def register_auth(self, auth_manager: 'AuthManager') -> None:
-        """Registra o gerenciador de autenticação"""
-        self.auth_manager = auth_manager
-        self.logger.info("Gerenciador de autenticação registrado")
-    
-    def get_page(self, route: str) -> Optional['BasePage']:
-        """Retorna uma página pelo route"""
-        return self.pages.get(route)
-    
-    async def init_client(self, q: Q) -> None:
-        """Inicializa o cliente"""
-        self.state_manager.initialize_client(q)
-        
-        # Aplicar tema/estilo baseado na estratégia
-        await self._apply_theme(q)
-        
-        # Verificar autenticação se habilitada
-        if self.config.auth_enabled and self.auth_manager:
-            if not await self.auth_manager.is_authenticated(q):
-                await self.show_login_page(q)
-                await q.page.save()
-                return
-        
-        # Carregar página padrão (sem clear_cards na inicialização)
-        default_route = self.get_default_route()
-        page = self.get_page(default_route)
-        if page:
-            await page.render(q)
-            self.state_manager.set_client_state(q, 'current_page', default_route)
-            await q.page.save()
+        self.handlers = {}
+        self.debug = False
+
+    def add_page(self, name, page):
+        self.pages[name] = page
+
+    def register_handler(self, event_name, handler):
+        self.handlers[event_name] = handler
+
+    def set_debug(self, debug):
+        self.debug = debug
+
+    @staticmethod
+    def get_args(q):
+        # Extrai args robustamente e normaliza __kv se presente
+        if isinstance(q.args, dict):
+            args = q.args
         else:
-            self.logger.warning(f"Página padrão não encontrada: {default_route}")
-            await self.show_error_page(q, f"Página padrão '{default_route}' não registrada")
+            try:
+                args = dict(q.args)
+            except Exception:
+                try:
+                    args = vars(q.args)
+                except Exception:
+                    args = {}
+        if '__kv' in args and isinstance(args['__kv'], dict) and args['__kv']:
+            return args['__kv']
+        return args
+
+    def register_wave_event(self, event_name):
+        @on(event_name)
+        async def handler(q: Q):
+            print(f"[DAZE][ON] Evento '{event_name}' recebido via @on")
+            args = self.get_args(q)
+            if args:
+                q.client.last_event = args.copy() if hasattr(args, 'copy') else dict(args)
+            await self.handle_events(q, args=args)
+            self.render(q)
             await q.page.save()
-    
-    async def _apply_theme(self, q: Q) -> None:
-        """Aplica tema baseado na estratégia de arquivos estáticos"""
-        try:
-            if self.static_manager and hasattr(self.static_manager, 'inject_theme_css'):
-                # Estratégia minimal - CSS inline
-                await self.static_manager.inject_theme_css(q)
-                self.logger.info(f"Tema aplicado via estratégia {self.static_strategy}")
-            else:
-                self.logger.info("Nenhum tema customizado aplicado - usando padrão Wave")
-                
-        except Exception as e:
-            self.logger.error(f"❌ Erro ao aplicar tema: {e}")
+
+    async def handle_events(self, q, state=None, args=None):
+        if args is None or not args:
+            args = getattr(q.client, 'last_event', {})
+        if not isinstance(args, dict):
+            args = {}
+        print(f"[DAZE][APP] handle_events: args={args}")
+        for event_name, handler in self.handlers.items():
+            if args.get(event_name):
+                print(f"[DAZE][APP] handler found: {event_name}")
+                return await handler(q, state=state, args=args)
+        for name, page in self.pages.items():
+            page_state = state.get(name) if state else None
+            print(f"[DAZE][APP] propagating to page: {name} (state={page_state})")
+            result = await page.handle_events(q, state=page_state, args=args)
+            if result:
+                print(f"[DAZE][APP] event handled by page: {name}")
+                return result
+        print(f"[DAZE][APP] event not handled at app level")
+        return None
+
+    def render(self, q, state=None):
+        for name, page in self.pages.items():
+            page.render(q, state=state.get(name) if state else None)
+
+    # --- Exemplo funcional minimalista removido ---
     
     async def _add_stylesheet(self, q: Q, css_url: str) -> None:
         """Adiciona stylesheet à página"""

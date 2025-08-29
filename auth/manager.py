@@ -11,6 +11,7 @@ import hashlib
 from datetime import datetime
 
 from .models import User
+print(f"[DEBUG] User importado em manager.py: {User}")
 
 
 class AuthProvider(ABC):
@@ -79,24 +80,25 @@ class SimpleAuthProvider(AuthProvider):
         return hashlib.sha256(password.encode()).hexdigest()
     
     async def authenticate(self, username: str, password: str) -> Optional[User]:
-        """Autentica usuário com username/email e senha"""
+        print(f"[DEBUG] authenticate chamado com: username={username}, password={password}")
         # Para o exemplo, senha padrão é "admin" para admin
         if username == "admin" and password == "admin":
             user = self._users.get("admin")
+            print(f"[DEBUG] user encontrado para admin: {user}")
             if user:
                 user.last_login = datetime.now()
                 self._save_users()
+                print(f"[DEBUG] user retornado: {user}")
                 return user
-        
         # Buscar por username ou email
         for user in self._users.values():
+            print(f"[DEBUG] checando user: {user}")
             if (user.username == username or user.email == username) and user.is_active:
-                # Aqui você implementaria verificação real de senha
-                # Por enquanto, aceita qualquer senha para demo
                 user.last_login = datetime.now()
                 self._save_users()
+                print(f"[DEBUG] user retornado por username/email: {user}")
                 return user
-        
+        print("[DEBUG] Nenhum usuário autenticado")
         return None
     
     async def get_user(self, user_id: str) -> Optional[User]:
