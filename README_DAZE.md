@@ -19,5 +19,14 @@ O DAZE é um template modular para aplicações H2O Wave, que padroniza o ciclo 
 ## Exemplo rápido
 Veja `daze_echo_example.py` para um exemplo funcional.
 
+### Exemplo de handler automático e acesso a args
+```python
+class MyComponent(BaseComponent):
+	def on_meu_evento(self, q, state=None, args=None):
+		valor = args.get('dummy')
+		return f'Você digitou: {valor}'
+```
+O DAZE chama automaticamente esse método quando o evento `meu_evento` ocorre, e o valor do textbox `dummy` estará disponível em `args`.
+
 ## Documentação completa
 Consulte o arquivo `DAZE_DOC.md` para detalhes de arquitetura, uso e melhores práticas.

@@ -48,36 +48,52 @@ wave run main.py
 ### Criar Sua Primeira Aplicação
 
 ```python
-from h2o_wave import main, app, Q, ui
-from components.base import BaseCard
-from components.charts import ChartComponent
+from h2o_wave import app, Q
+from core.app import WaveApp
 from pages.base import BasePage
+from components.base import BaseComponent, BaseCard
 
-# 1. Criar um Card Personalizado
-class MeuCard(BaseCard):
-    def __init__(self):
-        super().__init__('meu_card')
-        
-        # Adicionar componentes
-        self.add_component('grafico', ChartComponent('vendas_chart'))
-        
-        # Registrar eventos
-        self.register_event('atualizar', self._handle_update)
-    
-    def create(self, q: Q, zone: str, **kwargs):
-        # Criar controles
-        q.page[f'{self.card_id}_controls'] = ui.form_card(
-            box=zone,
-            title='Meu Dashboard',
+class MyComponent(BaseComponent):
+    def render(self, q, state=None):
+        q.page[self.component_id] = ui.form_card(
+            box='1 1 2 2',
             items=[
-                ui.button('atualizar', 'Atualizar Dados')
+                ui.text_l('Exemplo DAZE!'),
+                ui.textbox(name='dummy', label='Digite algo', visible=True),
+                ui.button(name='meu_evento', label='Enviar', primary=True)
             ]
         )
-        
-        # Criar componentes
-        dados_iniciais = {
-            'grafico': {
-                'chart_data': [{'x': 'A', 'y': 100}],
+        # Exibe resultado do evento
+        result = self.get_result(q, 'meu_evento')
+        if result:
+            q.page['result'] = ui.markdown_card(box='1 3 2 1', title='Resultado', content=result)
+
+    def on_meu_evento(self, q, state=None, args=None):
+        valor = args.get('dummy')
+        return f'Você digitou: {valor}'
+
+class MyCard(BaseCard):
+    def __init__(self, card_id):
+        super().__init__(card_id)
+        self.add_component('main', MyComponent('main'))
+
+class MyPage(BasePage):
+    def __init__(self, page_id):
+        super().__init__(page_id, title='Minha Página')
+        self.add_card('main', MyCard('main'))
+
+app_daze = WaveApp()
+app_daze.add_page('main', MyPage('main'))
+app_daze.register_wave_event('meu_evento')
+
+@app("/")
+async def serve(q: Q):
+    args = app_daze.get_args(q)
+    if args:
+        q.client.last_event = args.copy() if hasattr(args, 'copy') else dict(args)
+    await app_daze.handle_events(q, args=args)
+    app_daze.render(q)
+    await q.page.save()
                 'box': 'content',
                 'title': 'Vendas'
             }

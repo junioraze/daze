@@ -20,6 +20,7 @@ O DAZE é um template modular para aplicações H2O Wave, focado em robustez, de
 - No app principal, use `app_daze.register_wave_event('nome_do_evento')` para criar handlers @on plugáveis.
 - O ciclo de eventos é sempre o mesmo, seja via @on ou @app.
 
+
 ### 3. Exemplo Mínimo
 ```python
 from h2o_wave import app, Q
@@ -29,11 +30,21 @@ from components.base import BaseComponent, BaseCard
 
 class MyComponent(BaseComponent):
     def render(self, q, state=None):
-        # ...
-    async def handle_events(self, q, state=None, args=None):
-        if args.get('meu_evento'):
-            # ...
-            return True
+        q.page[self.component_id] = ui.form_card(
+            box='1 1 2 2',
+            items=[
+                ui.text_l('Exemplo DAZE!'),
+                ui.textbox(name='dummy', label='Digite algo', visible=True),
+                ui.button(name='meu_evento', label='Enviar', primary=True)
+            ]
+        )
+        result = self.get_result(q, 'meu_evento')
+        if result:
+            q.page['result'] = ui.markdown_card(box='1 3 2 1', title='Resultado', content=result)
+
+    def on_meu_evento(self, q, state=None, args=None):
+        valor = args.get('dummy')
+        return f'Você digitou: {valor}'
 
 class MyCard(BaseCard):
     def __init__(self, card_id):
@@ -57,6 +68,14 @@ async def serve(q: Q):
     await app_daze.handle_events(q, args=args)
     app_daze.render(q)
     await q.page.save()
+```
+
+#### Como acessar valores de campos do formulário no handler
+No método `on_<evento>`, basta acessar o valor pelo dicionário `args`:
+```python
+def on_meu_evento(self, q, state=None, args=None):
+    valor = args.get('dummy')
+    return f'Você digitou: {valor}'
 ```
 
 ## Comunicação e Propagação de Eventos

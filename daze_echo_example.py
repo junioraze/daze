@@ -8,7 +8,6 @@ from core.app import WaveApp
 # --- Component ---
 class EchoComponent(BaseComponent):
     def render(self, q, state=None):
-        # Botão DENTRO de form_card (garante submit)
         q.page[self.component_id] = ui.form_card(
             box='1 1 2 2',
             items=[
@@ -17,17 +16,15 @@ class EchoComponent(BaseComponent):
                 ui.button(name='echo', label='Echo', primary=True)
             ]
         )
-        # Renderiza feedback se existir
-        if hasattr(q.client, 'echo_result') and q.client.echo_result:
-            q.page['echo_result'] = ui.markdown_card(box='1 3 2 1', title='Resultado', content=q.client.echo_result)
-    async def handle_events(self, q, state=None, args=None):
-        print(f"[ECHO][COMPONENT] handle_events: args={args} id(q)={id(q)}")
-        if args.get('echo'):
-            q.client.echo_result = 'Você clicou!'
-            print('[ECHO][COMPONENT] Evento echo tratado!')
-            return True
-        print('[ECHO][COMPONENT] Evento não tratado.')
-        return None
+        # Renderiza feedback padronizado
+        result = self.get_result(q, 'echo')
+        if result:
+            q.page['echo_result'] = ui.markdown_card(box='1 3 2 1', title='Resultado', content=result)
+
+    def on_echo(self, q, state=None, args=None):
+        dummy = args.get('dummy')
+        print(f'[ECHO][COMPONENT] on_echo chamado! {dummy}')
+        return f'Você clicou! {dummy}'
 
 # --- Card ---
 class EchoCard(BaseCard):

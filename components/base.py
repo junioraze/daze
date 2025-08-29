@@ -39,12 +39,30 @@ class BaseComponent:
             args = getattr(q.client, 'last_event', {})
         if not isinstance(args, dict):
             args = {}
+        # Dispatch automático: procura métodos on_<evento>
+        for event_name in args:
+            method = getattr(self, f'on_{event_name}', None)
+            if callable(method):
+                print(f"[DAZE][COMPONENT] dispatch automático: on_{event_name}")
+                result = await method(q, state=state, args=args) if hasattr(method, '__await__') else method(q, state=state, args=args)
+                # Salva resultado padronizado
+                if not hasattr(q.client, 'result') or not isinstance(getattr(q.client, 'result', None), dict):
+                    q.client.result = {}
+                q.client.result[event_name] = result
+                return True
+        # Fallback: handlers registrados manualmente
         for event_name, handler in self.handlers.items():
             if args.get(event_name):
                 print(f"[DAZE][COMPONENT] handler found: {event_name}")
                 return await handler(q, state=state, args=args)
         print(f"[DAZE][COMPONENT] event not handled at component level")
         return None
+
+    def get_result(self, q, event_name):
+        result = getattr(q.client, 'result', None)
+        if not result or not isinstance(result, dict):
+            return None
+        return result.get(event_name)
 
 
 
